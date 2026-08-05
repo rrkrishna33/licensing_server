@@ -20,7 +20,10 @@ async function loadCustomers() {
         <td>${esc(c.contact_email || '—')}</td>
         <td>${esc(c.contact_phone || '—')}</td>
         <td>${formatDate(c.created_at)}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="showDetail(${c.id})">View</button></td>
+        <td style="display:flex;gap:.4rem">
+          <button class="btn btn-outline btn-sm" onclick="showDetail(${c.id})">View</button>
+          <button class="btn btn-danger btn-sm" data-id="${c.id}" data-name="${esc(c.name)}" onclick="handleDeleteCustomer(this)">Delete</button>
+        </td>
       </tr>
     `).join('');
   } catch (err) {
@@ -43,6 +46,7 @@ async function showDetail(id) {
   try {
     const { customer } = await apiFetch(`/admin/customers/${id}`);
     document.getElementById('detailName').textContent = customer.name;
+    document.getElementById('deleteCustomerBtn').dataset.name = customer.name;
     grid.innerHTML = `
       <div class="detail-item"><div class="dt">ID</div><div class="dd">${customer.id}</div></div>
       <div class="detail-item"><div class="dt">Name</div><div class="dd">${esc(customer.name)}</div></div>
@@ -163,6 +167,27 @@ document.getElementById('licenseForm').addEventListener('submit', async (e) => {
     btn.textContent = 'Generate';
   }
 });
+
+/* ── Delete ── */
+
+function handleDeleteCustomer(btn) {
+  deleteCustomer(parseInt(btn.dataset.id, 10), btn.dataset.name);
+}
+
+async function deleteCustomer(id, name, returnToList = false) {
+  if (!confirm(`Delete customer "${name}"?\n\nAll their licenses and activations will also be permanently deleted.`)) return;
+  try {
+    await apiFetch(`/admin/customers/${id}`, { method: 'DELETE' });
+    returnToList ? showList() : loadCustomers();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function deleteCurrentCustomer() {
+  const name = document.getElementById('deleteCustomerBtn').dataset.name || 'this customer';
+  deleteCustomer(currentCustomerId, name, true);
+}
 
 /* ── Helpers ── */
 

@@ -6,10 +6,12 @@ import {
   listCustomers,
   getCustomerById,
   createCustomer,
+  deleteCustomer,
   listLicenses,
   getLicenseWithActivations,
   generateLicense,
   updateLicenseStatus,
+  deleteLicense,
   getDashboardStats
 } from "../services/licenseService.js";
 import { env } from "../config/env.js";
@@ -104,6 +106,24 @@ adminRouter.patch("/admin/licenses/:id/status", validateBody(updateStatusSchema)
   try {
     const license = await updateLicenseStatus(Number(req.params.id), req.body.status as string);
     res.json({ ok: true, license });
+  } catch (error) {
+    next(error);
+  }
+});
+
+adminRouter.delete("/admin/customers/:id", async (req, res, next) => {
+  try {
+    await deleteCustomer(Number(req.params.id));
+    res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+adminRouter.delete("/admin/licenses/:id", async (req, res, next) => {
+  try {
+    await deleteLicense(Number(req.params.id));
+    res.json({ ok: true });
   } catch (error) {
     next(error);
   }

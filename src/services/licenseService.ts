@@ -183,6 +183,16 @@ export async function updateLicenseStatus(id: number, status: string) {
   return result.rows[0];
 }
 
+export async function deleteCustomer(id: number) {
+  const result = await pool.query(`DELETE FROM customers WHERE id = $1 RETURNING id`, [id]);
+  if (!result.rowCount) throw new HttpError(404, "Customer not found");
+}
+
+export async function deleteLicense(id: number) {
+  const result = await pool.query(`DELETE FROM licenses WHERE id = $1 RETURNING id`, [id]);
+  if (!result.rowCount) throw new HttpError(404, "License not found");
+}
+
 export async function getDashboardStats() {
   const [custResult, licResult, actResult] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS total FROM customers`),

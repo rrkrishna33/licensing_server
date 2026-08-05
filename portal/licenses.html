@@ -64,7 +64,10 @@
         <div id="detailView" class="hidden">
           <div class="page-header">
             <button class="btn btn-outline btn-sm" onclick="showList()">← Back to Licenses</button>
-            <div class="status-actions" id="statusActions"></div>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <div class="status-actions" id="statusActions"></div>
+              <button class="btn btn-danger btn-sm" id="deleteLicenseBtn" onclick="deleteCurrentLicense()">Delete License</button>
+            </div>
           </div>
           <div class="card" style="margin-bottom:1.5rem">
             <div class="card-header"><h2 id="detailKey" class="mono">—</h2></div>

@@ -22,7 +22,10 @@ async function loadLicenses() {
         <td>${l.active_machine_count} / ${l.max_machines}</td>
         <td>${formatDate(l.expires_at)}</td>
         <td>${formatDate(l.created_at)}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="showDetail(${l.id})">View</button></td>
+        <td style="display:flex;gap:.4rem">
+          <button class="btn btn-outline btn-sm" onclick="showDetail(${l.id})">View</button>
+          <button class="btn btn-danger btn-sm" data-id="${l.id}" data-key="${esc(l.license_key)}" onclick="handleDeleteLicense(this)">Delete</button>
+        </td>
       </tr>
     `).join('');
   } catch (err) {
@@ -43,6 +46,7 @@ async function showDetail(id) {
   try {
     const { license } = await apiFetch(`/admin/licenses/${id}`);
     document.getElementById('detailKey').textContent = license.license_key;
+    document.getElementById('deleteLicenseBtn').dataset.key = license.license_key;
 
     document.getElementById('detailGrid').innerHTML = `
       <div class="detail-item"><div class="dt">ID</div><div class="dd">${license.id}</div></div>
@@ -166,6 +170,27 @@ document.getElementById('createForm').addEventListener('submit', async (e) => {
     btn.textContent = 'Generate';
   }
 });
+
+/* ── Delete ── */
+
+function handleDeleteLicense(btn) {
+  deleteLicense(parseInt(btn.dataset.id, 10), btn.dataset.key);
+}
+
+async function deleteLicense(id, key, returnToList = false) {
+  if (!confirm(`Delete license "${key}"?\n\nAll machine activations for this license will also be permanently deleted.`)) return;
+  try {
+    await apiFetch(`/admin/licenses/${id}`, { method: 'DELETE' });
+    returnToList ? showList() : loadLicenses();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function deleteCurrentLicense() {
+  const key = document.getElementById('deleteLicenseBtn').dataset.key || 'this license';
+  deleteLicense(currentLicenseId, key, true);
+}
 
 /* ── Helpers ── */
 
