@@ -8,7 +8,11 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   VENDOR_API_TOKEN: z.string().optional(),
-  DEFAULT_LICENSE_DAYS: z.coerce.number().int().positive().default(365)
+  DEFAULT_LICENSE_DAYS: z.coerce.number().int().positive().default(365),
+  ADMIN_USERNAME: z.string().min(1, "ADMIN_USERNAME is required"),
+  ADMIN_PASSWORD: z.string().min(8, "ADMIN_PASSWORD must be at least 8 characters"),
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  CORS_ORIGIN: z.string().optional().default("*")
 });
 
 const parsed = envSchema.parse(process.env);

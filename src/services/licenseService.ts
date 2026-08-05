@@ -119,6 +119,91 @@ export async function validateActivation(params: {
   };
 }
 
+export async function listCustomers() {
+  const result = await pool.query(
+    `SELECT id, name, contact_email, contact_phone, created_at
+     FROM customers ORDER BY created_at DESC`
+  );
+  return result.rows;
+}
+
+export async function getCustomerById(id: number) {
+  const result = await pool.query(
+    `SELECT id, name, contact_email, contact_phone, created_at FROM customers WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function listLicenses() {
+  const result = await pool.query(
+    `SELECT l.id, l.license_key, l.product_name, l.status, l.max_machines,
+            l.expires_at, l.created_at, c.name AS customer_name, c.id AS customer_id,
+            COALESCE(a.active_count, 0)::int AS active_machine_count
+     FROM licenses l
+     INNER JOIN customers c ON c.id = l.customer_id
+     LEFT JOIN (
+       SELECT license_id, COUNT(*) AS active_count
+       FROM license_activations WHERE is_active = true GROUP BY license_id
+     ) a ON a.license_id = l.id
+     ORDER BY l.created_at DESC`
+  );
+  return result.rows;
+}
+
+export async function getLicenseWithActivations(id: number) {
+  const licResult = await pool.query(
+    `SELECT l.id, l.license_key, l.product_name, l.status, l.max_machines,
+            l.expires_at, l.created_at, l.updated_at, c.name AS customer_name, c.id AS customer_id
+     FROM licenses l
+     INNER JOIN customers c ON c.id = l.customer_id
+     WHERE l.id = $1`,
+    [id]
+  );
+  if (!licResult.rowCount) return null;
+
+  const activations = await pool.query(
+    `SELECT id, machine_id, app_version, is_active, first_activated_at, last_seen_at
+     FROM license_activations WHERE license_id = $1 ORDER BY last_seen_at DESC`,
+    [id]
+  );
+  return { ...licResult.rows[0], activations: activations.rows };
+}
+
+export async function updateLicenseStatus(id: number, status: string) {
+  const allowed = ["active", "suspended", "cancelled"];
+  if (!allowed.includes(status)) throw new HttpError(400, "Invalid status value");
+
+  const result = await pool.query(
+    `UPDATE licenses SET status = $1, updated_at = NOW() WHERE id = $2
+     RETURNING id, license_key, status, updated_at`,
+    [status, id]
+  );
+  if (!result.rowCount) throw new HttpError(404, "License not found");
+  return result.rows[0];
+}
+
+export async function getDashboardStats() {
+  const [custResult, licResult, actResult] = await Promise.all([
+    pool.query(`SELECT COUNT(*)::int AS total FROM customers`),
+    pool.query(`SELECT status, COUNT(*)::int AS total FROM licenses GROUP BY status`),
+    pool.query(`SELECT COUNT(*)::int AS total FROM license_activations WHERE is_active = true`)
+  ]);
+
+  const byStatus: Record<string, number> = {};
+  for (const row of licResult.rows) byStatus[row.status as string] = row.total as number;
+
+  return {
+    totalCustomers: custResult.rows[0].total as number,
+    totalLicenses: licResult.rows.reduce((s: number, r) => s + (r.total as number), 0),
+    activeLicenses: byStatus["active"] ?? 0,
+    suspendedLicenses: byStatus["suspended"] ?? 0,
+    expiredLicenses: byStatus["expired"] ?? 0,
+    cancelledLicenses: byStatus["cancelled"] ?? 0,
+    totalActiveMachines: actResult.rows[0].total as number
+  };
+}
+
 export async function getLicenseStatus(licenseKey: string) {
   const result = await pool.query(
     `SELECT l.id,
