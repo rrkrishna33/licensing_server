@@ -1,5 +1,7 @@
 import cors from "cors";
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
 import { healthRouter } from "./routes/health.js";
 import { customersRouter } from "./routes/customers.js";
@@ -8,6 +10,8 @@ import { authRouter } from "./routes/auth.js";
 import { adminRouter } from "./routes/admin.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function createApp() {
   const app = express();
@@ -18,6 +22,9 @@ export function createApp() {
   }));
   app.use(requestLogger);
   app.use(express.json({ limit: "1mb" }));
+
+  // Serve admin portal static files
+  app.use(express.static(path.join(__dirname, "..", "portal")));
 
   app.use("/", healthRouter);
   app.use("/api", authRouter);

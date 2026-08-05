@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customers — Licensing Portal</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">License<span>Hub</span></div>
+      <nav>
+        <a href="dashboard.html">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </a>
+        <a href="customers.html" class="active">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Customers
+        </a>
+        <a href="licenses.html">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          Licenses
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button onclick="logout()">Sign out</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar"><h1>Customers</h1></div>
+      <div class="content">
+
+        <!-- List view -->
+        <div id="listView">
+          <div class="page-header">
+            <h2 id="customerCount">Customers</h2>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ New Customer</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Created</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="customersBody"><tr><td colspan="6" class="loader">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail view -->
+        <div id="detailView" class="hidden">
+          <div class="page-header">
+            <button class="btn btn-outline btn-sm" onclick="showList()">← Back to Customers</button>
+          </div>
+          <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-header"><h2 id="detailName">Customer</h2></div>
+            <div style="padding:1.5rem">
+              <div class="detail-section">
+                <h3>Details</h3>
+                <div class="detail-grid" id="detailGrid"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>Licenses</h2>
+              <button class="btn btn-primary btn-sm" id="newLicenseForCustomerBtn">+ New License</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Key</th><th>Product</th><th>Status</th><th>Machines</th><th>Expires</th></tr>
+                </thead>
+                <tbody id="customerLicensesBody"><tr><td colspan="5" class="loader">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Create customer modal -->
+  <div id="createModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>New Customer</h2>
+      <form id="createForm" novalidate>
+        <div class="form-group">
+          <label for="cName">Name <span style="color:var(--danger)">*</span></label>
+          <input id="cName" type="text" placeholder="Acme Corp" required />
+        </div>
+        <div class="form-group">
+          <label for="cEmail">Contact Email</label>
+          <input id="cEmail" type="email" placeholder="contact@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="cPhone">Contact Phone</label>
+          <input id="cPhone" type="tel" placeholder="+1 555 000 0000" />
+        </div>
+        <div id="createError" class="error-msg"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" id="createBtn" class="btn btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New license for customer modal -->
+  <div id="licenseModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Generate License</h2>
+      <form id="licenseForm" novalidate>
+        <div class="form-group">
+          <label for="lProduct">Product Name <span style="color:var(--danger)">*</span></label>
+          <input id="lProduct" type="text" placeholder="My App Pro" required />
+        </div>
+        <div class="form-group">
+          <label for="lMachines">Max Machines</label>
+          <input id="lMachines" type="number" value="1" min="1" max="50" />
+        </div>
+        <div class="form-group">
+          <label for="lDays">Valid Days</label>
+          <input id="lDays" type="number" value="365" min="1" max="3650" />
+        </div>
+        <div id="licenseError" class="error-msg"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeLicenseModal()">Cancel</button>
+          <button type="submit" id="licenseBtn" class="btn btn-primary">Generate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/customers.js"></script>
+</body>
+</html>
